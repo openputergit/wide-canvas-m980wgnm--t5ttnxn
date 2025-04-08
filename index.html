@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Retention Analytics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Sidebar -->
+    <div class="fixed h-full w-64 bg-blue-600 text-white p-4">
+        <div class="text-xl font-bold mb-8">RetentionAI</div>
+        <nav>
+            <a href="#dashboard" class="block py-2 px-4 hover:bg-blue-700 rounded mb-2 active" onclick="showSection('dashboard')">
+                <i class="bi bi-speedometer2 mr-2"></i> Dashboard
+            </a>
+            <a href="#analysis" class="block py-2 px-4 hover:bg-blue-700 rounded mb-2" onclick="showSection('analysis')">
+                <i class="bi bi-graph-up mr-2"></i> Analysis
+            </a>
+            <a href="#payments" class="block py-2 px-4 hover:bg-blue-700 rounded mb-2" onclick="showSection('payments')">
+                <i class="bi bi-credit-card mr-2"></i> Payments
+            </a>
+            <a href="#settings" class="block py-2 px-4 hover:bg-blue-700 rounded mb-2" onclick="showSection('settings')">
+                <i class="bi bi-gear mr-2"></i> Settings
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="ml-64 p-8">
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="section active">
+            <h1 class="text-2xl font-bold mb-6">Dashboard</h1>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="dashboard-card bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-lg font-semibold mb-2">Total Customers</h3>
+                    <p class="text-3xl font-bold text-blue-600">1,234</p>
+                </div>
+                <div class="dashboard-card bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-lg font-semibold mb-2">Retention Rate</h3>
+                    <p class="text-3xl font-bold text-green-600">85%</p>
+                </div>
+                <div class="dashboard-card bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-lg font-semibold mb-2">Reward Points</h3>
+                    <p class="text-3xl font-bold text-purple-600">2,500</p>
+                </div>
+            </div>
+            <div class="mt-8">
+                <canvas id="retentionChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Analysis Section -->
+        <section id="analysis" class="section hidden">
+            <h1 class="text-2xl font-bold mb-6">Analysis</h1>
+            <div class="mb-4">
+                <input type="file" accept=".csv" class="p-2 border rounded" onchange="handleFileUpload(event)">
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <canvas id="analysisChart1"></canvas>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <canvas id="analysisChart2"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Payments Section -->
+        <section id="payments" class="section hidden">
+            <h1 class="text-2xl font-bold mb-6">Payments</h1>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-lg font-semibold mb-4">Pay Bills</h3>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Amount (₹)</label>
+                    <input type="number" class="w-full p-2 border rounded" id="paymentAmount">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Use Reward Points</label>
+                    <input type="checkbox" id="useRewards"> Use 500 points for ₹50 discount
+                </div>
+                <button onclick="processPayment()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    Pay Now
+                </button>
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section id="settings" class="section hidden">
+            <h1 class="text-2xl font-bold mb-6">Settings</h1>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-lg font-semibold mb-4">Profile Settings</h3>
+                <form id="profileForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Name</label>
+                        <input type="text" class="w-full p-2 border rounded" id="name">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Email</label>
+                        <input type="email" class="w-full p-2 border rounded" id="email">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Phone</label>
+                        <input type="tel" class="w-full p-2 border rounded" id="phone">
+                    </div>
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                        Save Changes
+                    </button>
+                </form>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Navigation
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById(sectionId).classList.remove('hidden');
+        }
+
+        // Dashboard Chart
+        const retentionCtx = document.getElementById('retentionChart').getContext('2d');
+        new Chart(retentionCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Customer Retention Rate',
+                    data: [75, 78, 80, 82, 85, 85],
+                    borderColor: 'rgb(59, 130, 246)',
+                    tension: 0.1
+                }]
+            }
+        });
+
+        // Analysis Charts
+        function handleFileUpload(event) {
+            // Implement CSV parsing logic here
+            alert('CSV file uploaded successfully!');
+        }
+
+        // Payment Processing
+        function processPayment() {
+            const amount = document.getElementById('paymentAmount').value;
+            const useRewards = document.getElementById('useRewards').checked;
+            
+            if (!amount) {
+                alert('Please enter an amount');
+                return;
+            }
+
+            const finalAmount = useRewards ? amount - 50 : amount;
+            alert(`Payment of ₹${finalAmount} processed successfully!`);
+        }
+
+        // Profile Settings
+        document.getElementById('profileForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+
+            // Save to localStorage for demo purposes
+            localStorage.setItem('userProfile', JSON.stringify({ name, email, phone }));
+            alert('Profile updated successfully!');
+        });
+
+        // Load saved profile data
+        const savedProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+        if (savedProfile.name) document.getElementById('name').value = savedProfile.name;
+        if (savedProfile.email) document.getElementById('email').value = savedProfile.email;
+        if (savedProfile.phone) document.getElementById('phone').value = savedProfile.phone;
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
